@@ -419,19 +419,21 @@ for target_year in [2024, 2023]:
                 df_ref['month'] * 10000 + df_ref['day_of_month'] * 100 + df_ref['hour']
             ).map(lookup)
 
-# Merge pattern features
+# Merge pattern features (use .values to avoid index alignment issues)
 for df_ref in [train_featured, pred_featured]:
-    df_ref_tmp = df_ref.merge(g1, on=['month', 'day_of_week', 'hour'], how='left')
+    df_ref.reset_index(drop=True, inplace=True)
+    
+    tmp1 = df_ref[['month', 'day_of_week', 'hour']].merge(g1, on=['month', 'day_of_week', 'hour'], how='left')
     for col in ['hist_mdh_mean', 'hist_mdh_std', 'hist_mdh_median']:
-        df_ref[col] = df_ref_tmp[col]
+        df_ref[col] = tmp1[col].values
     
-    df_ref_tmp = df_ref.merge(g2, on=['month', 'hour'], how='left')
+    tmp2 = df_ref[['month', 'hour']].merge(g2, on=['month', 'hour'], how='left')
     for col in ['hist_mh_mean', 'hist_mh_median']:
-        df_ref[col] = df_ref_tmp[col]
+        df_ref[col] = tmp2[col].values
     
-    df_ref_tmp = df_ref.merge(g3, on=['day_of_week', 'hour'], how='left')
+    tmp3 = df_ref[['day_of_week', 'hour']].merge(g3, on=['day_of_week', 'hour'], how='left')
     for col in ['hist_dh_mean', 'hist_dh_median']:
-        df_ref[col] = df_ref_tmp[col]
+        df_ref[col] = tmp3[col].values
 
 # ============================================================
 # 5. Define Feature Columns
@@ -497,7 +499,7 @@ import lightgbm as lgb
 print("\n[1/3] LightGBM (huber loss, deep)...")
 lgb_params1 = {
     'objective': 'huber',
-    'alpha': 0.9,  # huber delta
+    'alpha': 500,  # huber delta (traffic range is 0-7280)
     'metric': 'mae',
     'boosting_type': 'gbdt',
     'num_leaves': 255,
