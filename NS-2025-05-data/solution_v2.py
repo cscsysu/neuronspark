@@ -752,7 +752,7 @@ pattern.columns = ['month', 'day_of_week', 'hour', 'pattern_vol']
 pred_df_merged = pred_df[['date_time', 'month', 'day_of_week', 'hour']].merge(
     pattern, on=['month', 'day_of_week', 'hour'], how='left'
 )
-pattern_pred = pred_df_merged['pattern_vol'].fillna(ensemble_pred).values
+pattern_pred = pred_df_merged['pattern_vol'].fillna(pd.Series(ensemble_pred)).values
 
 # Final blend: model ensemble + historical pattern
 final_pred = 0.75 * ensemble_pred + 0.25 * pattern_pred
